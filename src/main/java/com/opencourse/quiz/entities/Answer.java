@@ -8,6 +8,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 import lombok.Data;
 
@@ -17,7 +19,11 @@ public class Answer {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
+
+    @NotBlank(message = "answer is mandatory")
     private String answer;
+
+    @NotNull(message = "isCorrect attribute must be specified")
     private Boolean isCorrect;
     
     //question

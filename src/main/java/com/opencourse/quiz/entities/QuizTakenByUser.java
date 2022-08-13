@@ -11,6 +11,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotNull;
 
 import lombok.Data;
 
@@ -21,12 +22,16 @@ public class QuizTakenByUser {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "isPassed must be specified")
     private Boolean isPassed;
+    @NotNull(message = "takenAt must be specified")
     private LocalDateTime takenAt;
     //quiz
     @ManyToOne
     private Quiz quiz;
+
     //user
+    @NotNull(message = "userId cannot be null")
     private Long userId;
 
 
