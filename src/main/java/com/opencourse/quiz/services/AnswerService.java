@@ -98,6 +98,8 @@ public class AnswerService {
 
     //only if user owns the cousre
     public void deleteAnswerById(Long id){
+	aRepo.findById(id)
+	.orElseThrow(()->new AnswerNotFoundException(id));
         aRepo.deleteById(id);
     }
 }
