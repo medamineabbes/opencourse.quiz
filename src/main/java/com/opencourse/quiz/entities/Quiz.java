@@ -2,13 +2,13 @@ package com.opencourse.quiz.entities;
 
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -32,14 +32,13 @@ public class Quiz {
     //section
     @NotNull
     private Long sectionId;
-    
+
     //questions
-    @NotEmpty(message="questions are mandatory")
     @Size(min = 5,message="the min number of questions in a quiz is 5")
-    @OneToMany(mappedBy="quiz")
+    @OneToMany(mappedBy="quiz",cascade = CascadeType.REMOVE)
     private List<Question> questions;
 
     // takenByUser
-    @OneToMany(mappedBy="quiz")
+    @OneToMany(mappedBy="quiz",cascade = CascadeType.REMOVE)
     private List<QuizTakenByUser> takenByUser;
 }

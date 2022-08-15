@@ -1,0 +1,55 @@
+package com.opencourse.quiz.api;
+
+import java.util.List;
+
+import javax.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.opencourse.quiz.dtos.AnswerDto;
+import com.opencourse.quiz.services.AnswerService;
+
+import lombok.AllArgsConstructor;
+
+@RestController
+@RequestMapping("/api/v1/answer")
+@AllArgsConstructor
+public class AnswerController {
+    private final AnswerService service;
+    
+    //add security
+    @PostMapping
+    public Long addAnswer(@Valid @RequestBody(required = true) AnswerDto answerDto){
+        return service.addAnswer(answerDto);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<AnswerDto> getAnswerById(@PathVariable(required = true) Long id){
+        return ResponseEntity.ok(service.getAnswerById(id));
+    }
+
+    //add security
+    @PutMapping
+    public void updateAnswer(@Valid @RequestBody(required = true) AnswerDto answer){
+        service.updateAnswer(answer);
+    }
+
+    //add security
+    @DeleteMapping("/{id}")
+    public void deleteAnswerById(@PathVariable(required = true) Long id){
+        service.deleteAnswerById(id);
+    }
+    
+    @GetMapping("/question/{id}")
+    public ResponseEntity<List<AnswerDto>> getAnswersByQuestionId(@PathVariable(required=true)Long id){
+        return ResponseEntity.ok(service.getByQuestionId(id));
+    }
+}
