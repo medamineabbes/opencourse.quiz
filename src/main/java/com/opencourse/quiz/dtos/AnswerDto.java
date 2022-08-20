@@ -44,4 +44,16 @@ public class AnswerDto {
         return answerDto;
     }
 
+    @Override
+    public boolean equals(Object a) {
+        AnswerDto an=(AnswerDto)a;
+        if(
+            an.getAnswer().equals(getAnswer()) &&
+            an.getId().equals(getId()) &&
+            an.getQuestionId().equals(getQuestionId()) &&
+            an.isCorrect() == isCorrect()
+        )
+        return true;
+        return false;
+    }
 }

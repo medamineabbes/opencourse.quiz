@@ -1,6 +1,5 @@
 package com.opencourse.quiz.apis;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +30,7 @@ import com.opencourse.quiz.dtos.AnswerDto;
 import com.opencourse.quiz.exceptions.AnswerNotFoundException;
 import com.opencourse.quiz.services.AnswerService;
 
+
 @WebMvcTest(AnswerController.class)
 public class AnswerControllerTest {
     private String basePath="/api/v1/answer";
@@ -53,7 +53,7 @@ public class AnswerControllerTest {
         a.setAnswer("answer");
         a.setId(1L);
         a.setQuestionId(2L);
-        when(service.getAnswerById(1L)).thenReturn(a);
+        when(service.getAnswerById(1L,15L)).thenReturn(a);
 
         mvc.perform(
             get(basePath + "/1")
@@ -64,7 +64,7 @@ public class AnswerControllerTest {
     @Test
     @DisplayName("should return 404")
     public void getAnswerErrorTest() throws Exception{
-        when(service.getAnswerById(1L)).thenThrow(new AnswerNotFoundException(1L));
+        when(service.getAnswerById(1L,15L)).thenThrow(new AnswerNotFoundException(1L));
         mvc.perform(
             get(basePath+"/1")
         ).andDo(print())
@@ -114,7 +114,7 @@ public class AnswerControllerTest {
         ).andDo(print())
         .andExpect(status().isOk());
 
-        verify(service).updateAnswer(any(AnswerDto.class));
+        verify(service).updateAnswer(a,15L);
     }
 
 

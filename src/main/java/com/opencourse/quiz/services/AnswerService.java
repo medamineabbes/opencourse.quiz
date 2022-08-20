@@ -10,6 +10,8 @@ import com.opencourse.quiz.entities.Answer;
 import com.opencourse.quiz.entities.Question;
 import com.opencourse.quiz.exceptions.AnswerNotFoundException;
 import com.opencourse.quiz.exceptions.QuestionNotFoundException;
+import com.opencourse.quiz.exceptions.UnAuthorizedActionException;
+import com.opencourse.quiz.externalservices.CourseService;
 import com.opencourse.quiz.repos.AnswerRepo;
 import com.opencourse.quiz.repos.QuestionRepo;
 
@@ -21,26 +23,39 @@ import lombok.AllArgsConstructor;
 public class AnswerService {
     private final AnswerRepo aRepo;
     private final QuestionRepo qRepo;
-
-    public List<AnswerDto> getByQuestionId(Long questionId){
+    private final CourseService courseService;
+    public List<AnswerDto> getByQuestionId(Long questionId,Long userId){
+        //make sure answer exists
         Question question=qRepo
         .findById(questionId)
         .orElseThrow(()->new QuestionNotFoundException(questionId));
+
+        //make sure user has access to answer
+        if(!courseService.userHasAccessToSection(question.getQuiz().getSectionId(), userId))
+        throw new QuestionNotFoundException(questionId);
+
+
         return question.getAnswers()
         .stream()
         .map((answer)->AnswerDto.toDto(answer))
         .collect(Collectors.toList());
     }
     
-    public AnswerDto getAnswerById(Long id)throws AnswerNotFoundException{
+    public AnswerDto getAnswerById(Long id,Long userId){
+        //make sure answer exists
         Answer a=aRepo.findById(id)
         .orElseThrow(()->
         new AnswerNotFoundException("answer with id : " + id + " not found"));
+
+        //make sure user has access
+        if(!courseService.userHasAccessToSection(a.getQuestion().getQuiz().getSectionId(), userId))
+        throw new AnswerNotFoundException(id);
+
         return AnswerDto.toDto(a);
     }
 
-    //only if he owns the course
-    public Long addAnswer(AnswerDto answerDto)throws QuestionNotFoundException{
+    //only teachers
+    public Long addAnswer(AnswerDto answerDto,Long userId){
         //make sure question exists
         Question q=qRepo
         .findById(answerDto.getQuestionId())
@@ -48,6 +63,10 @@ public class AnswerService {
             ()->
             new QuestionNotFoundException("question with id : " + answerDto.getQuestionId() + " not found")
             );
+        
+            //make sure user created the course
+        if(!courseService.userCreatedSection(q.getQuiz().getSectionId(), userId))
+        throw new UnAuthorizedActionException();
 
         //add answer
         Answer a=AnswerDto.toAnswer(answerDto);
@@ -62,14 +81,19 @@ public class AnswerService {
         return a.getId();
     }
 
-    //only if he owns the course
-    public void updateAnswer(AnswerDto a)throws QuestionNotFoundException,AnswerNotFoundException{
+    //only teachers
+    public void updateAnswer(AnswerDto a,Long userId){
+        //make sure answer exists
         Answer answer=aRepo
         .findById(a.getId())
         .orElseThrow(()->
         new AnswerNotFoundException("answer with id : " + a.getId() + " not found")
         ); 
         
+        //make sure user created the course
+        if(!courseService.userCreatedSection(answer.getQuestion().getQuiz().getSectionId(), userId))
+        throw new UnAuthorizedActionException();
+
         Question q=qRepo
         .findById(a.getQuestionId())
         .orElseThrow(()->
@@ -96,10 +120,16 @@ public class AnswerService {
         aRepo.flush();        
     }
 
-    //only if user owns the cousre
-    public void deleteAnswerById(Long id){
-	aRepo.findById(id)
-	.orElseThrow(()->new AnswerNotFoundException(id));
+    //only teachers
+    public void deleteAnswerById(Long id,Long userId){
+        //make sure answer exists
+	    Answer a=aRepo.findById(id)
+	    .orElseThrow(()->new AnswerNotFoundException(id));
+
+        //make sure user created the course
+        if(!courseService.userCreatedSection(a.getQuestion().getQuiz().getSectionId(), userId))
+        throw new UnAuthorizedActionException();
+
         aRepo.deleteById(id);
     }
 }

@@ -25,31 +25,40 @@ import lombok.AllArgsConstructor;
 public class AnswerController {
     private final AnswerService service;
     
-    //add security
+    //only teachers
     @PostMapping
     public Long addAnswer(@Valid @RequestBody(required = true) AnswerDto answerDto){
-        return service.addAnswer(answerDto);
+        Long userId=15L;
+        return service.addAnswer(answerDto,userId);
     }
     
+    //only authentic users 
     @GetMapping("/{id}")
     public ResponseEntity<AnswerDto> getAnswerById(@PathVariable(required = true) Long id){
-        return ResponseEntity.ok(service.getAnswerById(id));
+        Long userId=15L;
+        return ResponseEntity.ok(service.getAnswerById(id,userId));
     }
 
-    //add security
+    //only teacher
     @PutMapping
     public void updateAnswer(@Valid @RequestBody(required = true) AnswerDto answer){
-        service.updateAnswer(answer);
+        Long userId=15L;
+        service.updateAnswer(answer,userId);
     }
 
-    //add security
+    //only teacher
     @DeleteMapping("/{id}")
     public void deleteAnswerById(@PathVariable(required = true) Long id){
-        service.deleteAnswerById(id);
+        Long userId=15L;
+        service.deleteAnswerById(id,userId);
     }
     
+    //authentic users
     @GetMapping("/question/{id}")
     public ResponseEntity<List<AnswerDto>> getAnswersByQuestionId(@PathVariable(required=true)Long id){
-        return ResponseEntity.ok(service.getByQuestionId(id));
+        Long userId=15L;
+        return ResponseEntity.ok(service.getByQuestionId(id,userId));
     }
+
+    
 }

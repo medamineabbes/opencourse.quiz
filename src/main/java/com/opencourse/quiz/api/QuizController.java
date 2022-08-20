@@ -1,5 +1,7 @@
 package com.opencourse.quiz.api;
 
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -25,34 +27,53 @@ import lombok.AllArgsConstructor;
 public class QuizController {
     private QuizService service;
     
+    //only authentic users
     @GetMapping("/{id}")
     public ResponseEntity<QuizDto> getQuizById(@PathVariable(required = true) Long id) {
-        return ResponseEntity.ok(service.getQuiz(id));
+        Long userId=15L;
+        return ResponseEntity.ok(service.getQuiz(id,userId));
     }
 
+    //only teachers
     @PostMapping
     public ResponseEntity<Long> addQuiz( @Valid @RequestBody(required = true) QuizDto quizDto) {    
-        return ResponseEntity.ok(service.addQuiz(quizDto));
+        Long userId=15L;
+        return ResponseEntity.ok(service.addQuiz(quizDto,userId));
     }
     
+    //only teacher
     @PutMapping
     public void updateQuiz(@Valid @RequestBody(required = true) QuizDto quizDto){
-        service.updateQuiz(quizDto);
+        Long userId=15L;
+        service.updateQuiz(quizDto,userId);
     }
 
+    //only teacher
     @DeleteMapping("/{id}")
     public void deleteQuizById(@PathVariable(required = true) Long id){
-        service.deleteQuiz(id);
+        Long userId=15L;
+        service.deleteQuiz(id,userId);
     }
 
+    //only authentic users
     @PostMapping("/take")
-    public boolean takeQuiz(@Valid @RequestBody(required = true) TakeQuizDto takeQuizDto){
-        return service.takeQuiz(takeQuizDto);
+    public ResponseEntity<Boolean> takeQuiz(@Valid @RequestBody(required = true) TakeQuizDto takeQuizDto){
+        Long userId=15L;
+        return ResponseEntity.ok(service.takeQuiz(takeQuizDto,userId));
     }
 
-    @PostMapping("/verif")
-    public boolean areQuizsPassed(@Valid @RequestBody(required = true) verifyQuizDto verifyQuizDto){
-        return service.quizArePassed(verifyQuizDto.getSectionIds(), verifyQuizDto.getUserId());
+    //only from courseService
+    @PostMapping("/passed")
+    public ResponseEntity<Boolean> areQuizsPassed(@Valid @RequestBody(required = true) verifyQuizDto verifyQuizDto){
+        return ResponseEntity
+        .ok(service.finishedSections(verifyQuizDto.getSectionIds(), verifyQuizDto.getUserId()));
+    }
+
+    //only from CourseService
+    @PostMapping("/valid")
+    public ResponseEntity<Boolean> validSection(@RequestBody(required = true) List<Long> sectionIds){
+        return ResponseEntity
+        .ok(service.validSections(sectionIds));
     }
 
 }

@@ -21,28 +21,33 @@ import com.opencourse.quiz.dtos.QuizDto;
 import com.opencourse.quiz.dtos.TakeAnswerDto;
 import com.opencourse.quiz.dtos.TakeQuestionDto;
 import com.opencourse.quiz.dtos.TakeQuizDto;
-import com.opencourse.quiz.entities.*;
+import com.opencourse.quiz.entities.Quiz;
+import com.opencourse.quiz.entities.Question;
+import com.opencourse.quiz.entities.QuizTakenByUser;
+import com.opencourse.quiz.entities.Answer;
 import com.opencourse.quiz.exceptions.MissingAnswerException;
 import com.opencourse.quiz.exceptions.QuizNotFoundException;
 import com.opencourse.quiz.exceptions.QuizUntakableException;
 import com.opencourse.quiz.exceptions.UnAnsweredQuestionException;
+import com.opencourse.quiz.externalservices.CourseService;
 import com.opencourse.quiz.repos.QuizRepo;
 import com.opencourse.quiz.repos.QuizTakenRepo;
+
+
 public class QuizServiceTest {
     Quiz quiz;
     Question question1,question2,question3;
     Answer a1,a2,a3,a4,a5,a6,a7,a8,a9;
-    QuizTakenByUser qtbu;
-    QuizTakenByUser qtbu2;
+    QuizTakenByUser qtbu,qtbu2;
     QuizRepo repo=mock(QuizRepo.class);
     QuizTakenRepo qRepo=mock(QuizTakenRepo.class);
-
+    CourseService courseService=mock(CourseService.class);
     QuizService service;
 
     @BeforeEach
     public void init(){
 
-        service=new QuizService(repo, qRepo);
+        service=new QuizService(repo, qRepo,courseService);
         question1=new Question();question2=new Question();question3=new Question();
         a1=new Answer();a2=new Answer();a3=new Answer();a4=new Answer();a5=new Answer();a6=new Answer();a7=new Answer();a8=new Answer();a9=new Answer();
         quiz=new Quiz();
@@ -116,8 +121,8 @@ public class QuizServiceTest {
     @DisplayName("should return quiz")
     public void getQuizTest() throws Exception{
         when(repo.findById(1L)).thenReturn(Optional.of(quiz));
-
-        QuizDto qdto=service.getQuiz(1L);
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
+        QuizDto qdto=service.getQuiz(1L,15L);
 
         assertEquals(quiz.getDescription(),qdto.getDescription());
         assertEquals(quiz.getId(), qdto.getId());
@@ -125,25 +130,25 @@ public class QuizServiceTest {
         assertEquals(quiz.getTitle(), qdto.getTitle());
     }
 
-
     @Test
     @DisplayName("should throws Quz nor found exception")
     public void getQuizErrorTest(){
         assertThrows(QuizNotFoundException.class,()->{
-            service.getQuiz(1L);
+            service.getQuiz(1L,15L);
         });
     }
 
     @Test
     @DisplayName("should add quiz")
     public void addQuizTest(){
+        when(courseService.userCreatedSection(1L, 15L)).thenReturn(true);
         QuizDto qdto=new QuizDto();
         qdto.setDescription("description");
         qdto.setPassed(true);
         qdto.setSectionId(1L);
         qdto.setTitle("title");
         
-        service.addQuiz(qdto);
+        service.addQuiz(qdto,15L);
 
         verify(repo).save(any(Quiz.class));
     }
@@ -151,15 +156,16 @@ public class QuizServiceTest {
     @Test
     @DisplayName("should update quiz")
     public void updateQuizTest() throws Exception{
+        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userCreatedSection(quiz.getSectionId(), 15L)).thenReturn(true);
         QuizDto qdto=new QuizDto();
         qdto.setDescription("description");
         qdto.setPassed(true);
         qdto.setSectionId(1L);
         qdto.setTitle("title");
         qdto.setId(1L);
-        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
 
-        service.updateQuiz(qdto);
+        service.updateQuiz(qdto,15L);
 
         verify(repo).flush();
     }
@@ -175,7 +181,7 @@ public class QuizServiceTest {
         qdto.setId(1L);
 
         assertThrows(QuizNotFoundException.class, ()->{
-            service.updateQuiz(qdto);
+            service.updateQuiz(qdto,15L);
         });
     }
 
@@ -183,8 +189,9 @@ public class QuizServiceTest {
     @DisplayName("should delete quiz")
     public void deleteQuizTest(){
         when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userCreatedSection(quiz.getSectionId(), 15L)).thenReturn(true);
 
-        service.deleteQuiz(1L);
+        service.deleteQuiz(1L,15L);
 
         verify(repo).deleteById(1L);
     }
@@ -193,13 +200,16 @@ public class QuizServiceTest {
     @DisplayName("should throw Quiz not found Exception")
     public void deleteQuizErrorTest(){
         assertThrows(QuizNotFoundException.class, ()->{
-            service.deleteQuiz(1L);
+            service.deleteQuiz(1L,15L);
         });
     }
 
     @Test
     @DisplayName("should return true(success) after take quiz")
     public void takeQuizTest() throws Exception{
+        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
+
         TakeAnswerDto ta1,ta2,ta3,ta4,ta5,ta6,ta7,ta8,ta9;
         ta1=new TakeAnswerDto(1L,true);
         ta2=new TakeAnswerDto(2L,true);
@@ -219,22 +229,22 @@ public class QuizServiceTest {
         TakeQuizDto tqu;
         tqu=new TakeQuizDto(1L, List.of(tq1,tq2,tq3));
 
-        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
-
-        boolean actual=service.takeQuiz(tqu);
+        boolean actual=service.takeQuiz(tqu,15L);
         assertTrue(actual);
     }
 
     @Test
     @DisplayName("should return false(failure) after take quiz")
     public void takeQuizFailureTest() throws Exception{
+        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
         TakeAnswerDto ta1,ta2,ta3,ta4,ta5,ta6,ta7,ta8,ta9;
         ta1=new TakeAnswerDto(1L,true);
         ta2=new TakeAnswerDto(2L,true);
         ta3=new TakeAnswerDto(3L,false);
         ta4=new TakeAnswerDto(4L,false);
         ta5=new TakeAnswerDto(5L,false);
-        ta6=new TakeAnswerDto(6L,false);
+        ta6=new TakeAnswerDto(6L,true);
         ta7=new TakeAnswerDto(7L,false);
         ta8=new TakeAnswerDto(8L,true);
         ta9=new TakeAnswerDto(9L,false);
@@ -247,19 +257,22 @@ public class QuizServiceTest {
         TakeQuizDto tqu;
         tqu=new TakeQuizDto(1L, List.of(tq1,tq2,tq3));
 
-        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        
 
-        boolean actual=service.takeQuiz(tqu);
+        boolean actual=service.takeQuiz(tqu,15L);
         assertFalse(actual);
     }
     
     @Test
     @DisplayName("should return false after (failures) taking quiz")
     public void takeQuizFailureTest2() throws Exception{
+        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
+
         TakeAnswerDto ta1,ta2,ta3,ta4,ta5,ta6,ta7,ta8,ta9;
         ta1=new TakeAnswerDto(1L,true);
-        ta2=new TakeAnswerDto(2L,true);
-        ta3=new TakeAnswerDto(3L,false);
+        ta2=new TakeAnswerDto(2L,false);
+        ta3=new TakeAnswerDto(3L,true);
         ta4=new TakeAnswerDto(4L,true);
         ta5=new TakeAnswerDto(5L,false);
         ta6=new TakeAnswerDto(6L,false);
@@ -275,15 +288,15 @@ public class QuizServiceTest {
         TakeQuizDto tqu;
         tqu=new TakeQuizDto(1L, List.of(tq1,tq2,tq3));
 
-        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
-
-        boolean actual=service.takeQuiz(tqu);
+        boolean actual=service.takeQuiz(tqu,15L);
         assertFalse(actual);
     }
     
     @Test
     @DisplayName("should throw QuizUntakableException")
     public void takeQuizErrorTest1(){
+        
+
         TakeAnswerDto ta1,ta2,ta3,ta4,ta5,ta6,ta7,ta8,ta9;
         ta1=new TakeAnswerDto(1L,true);
         ta2=new TakeAnswerDto(2L,true);
@@ -313,9 +326,11 @@ public class QuizServiceTest {
 
         when(repo.findById(1L)).thenReturn(Optional.of(quiz));
         when(qRepo.findByQuizIdAndUserId(1L, 15L)).thenReturn(List.of(qtbu));
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
+        
 
         assertThrows(QuizUntakableException.class, ()->{
-            service.takeQuiz(tqu);
+            service.takeQuiz(tqu,15L);
         });
         
     }
@@ -357,17 +372,22 @@ public class QuizServiceTest {
         qtbu2.setSelectedAnswers(List.of(a4,a7));
         qtbu2.setTakenAt(LocalDateTime.now().minusHours(3));
         qtbu2.setUserId(15L);
-        
+
         when(repo.findById(1L)).thenReturn(Optional.of(quiz));
         when(qRepo.findByQuizIdAndUserId(1L, 15L)).thenReturn(List.of(qtbu,qtbu2));
-
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
+        
         assertThrows(QuizUntakableException.class, ()->{
-            service.takeQuiz(tqu);
+            service.takeQuiz(tqu,15L);
         });
     }
+    
     @Test
     @DisplayName("should throw missing question exception")
     public void takeQuizTest2(){
+        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
+
         TakeAnswerDto ta1,ta2,ta3,ta4,ta5,ta6;
         ta1=new TakeAnswerDto(1L,true);
         ta2=new TakeAnswerDto(2L,true);
@@ -382,16 +402,18 @@ public class QuizServiceTest {
 
         TakeQuizDto tqu;
         tqu=new TakeQuizDto(1L, List.of(tq1,tq2));
-        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+
         assertThrows(UnAnsweredQuestionException.class, () ->{
-            service.takeQuiz(tqu);
+            service.takeQuiz(tqu,15L);
         });
     }
-
 
     @Test
     @DisplayName("sould throws missing answer Exception")
     public void takeQuizTest3(){
+        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userHasAccessToSection(quiz.getSectionId(), 15L)).thenReturn(true);
+
         TakeAnswerDto ta1,ta2,ta3,ta4,ta5,ta6,ta7,ta9;
         ta1=new TakeAnswerDto(1L,true);
         ta2=new TakeAnswerDto(2L,true);
@@ -418,16 +440,18 @@ public class QuizServiceTest {
         qtbu.setTakenAt(LocalDateTime.now().minusHours(5));
         qtbu.setUserId(15L);
 
-        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
 
         assertThrows(MissingAnswerException.class, ()->{
-            service.takeQuiz(tqu);
+            service.takeQuiz(tqu,15L);
         });
     }
 
     @Test
     @DisplayName("should throw UnAnswered Question Exception")
     public void takeQuizError4(){
+        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        when(courseService.userHasAccessToSection(quiz.getSectionId(),15L)).thenReturn(true);
+
         TakeAnswerDto ta4,ta5,ta6,ta7,ta8,ta9;
         ta4=new TakeAnswerDto(4L,true);
         ta5=new TakeAnswerDto(5L,false);
@@ -451,13 +475,12 @@ public class QuizServiceTest {
         qtbu.setTakenAt(LocalDateTime.now().minusHours(5));
         qtbu.setUserId(15L);
 
-        when(repo.findById(1L)).thenReturn(Optional.of(quiz));
+        
 
         assertThrows(UnAnsweredQuestionException.class, ()->{
-            service.takeQuiz(tqu);
+            service.takeQuiz(tqu,15L);
         });
     }
-
 
     @Test
     @DisplayName("should return true")
@@ -498,10 +521,9 @@ public class QuizServiceTest {
         when(qRepo.findByQuizIdAndUserId(3L, userId)).thenReturn(List.of(qtbu3,qtbu4));
         when(qRepo.findByQuizIdAndUserId(4L, userId)).thenReturn(List.of(qtbu5));
 
-        boolean actual =service.quizArePassed(List.of(1L,2L,3L), userId);
+        boolean actual =service.finishedSections(List.of(1L,2L,3L), userId);
         assertTrue(actual);
     }
-
 
     @Test
     @DisplayName("should return false")
@@ -542,8 +564,158 @@ public class QuizServiceTest {
         when(qRepo.findByQuizIdAndUserId(3L, userId)).thenReturn(List.of(qtbu3,qtbu4));
         when(qRepo.findByQuizIdAndUserId(4L, userId)).thenReturn(List.of(qtbu5));
 
-        boolean actual =service.quizArePassed(List.of(1L,2L,3L), userId);
+        boolean actual =service.finishedSections(List.of(1L,2L,3L), userId);
         assertFalse(actual);
     }
 
+    @Test
+    @DisplayName("should return true")
+    public void validSectionsTest(){
+        Quiz q1,q2,q3;
+        Question qu1,qu2,qu3,qu4,qu5,qu6,qu7,qu8,qu9;
+        Answer a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18;
+
+        q1=new Quiz();
+        q2=new Quiz();
+        q3=new Quiz();
+
+        qu1=new Question();
+        qu2=new Question();
+        qu3=new Question();
+        qu4=new Question();
+        qu5=new Question();
+        qu6=new Question();
+        qu7=new Question();
+        qu8=new Question();
+        qu9=new Question();
+        a1=new Answer();a4=new Answer();a7=new Answer();a10=new Answer();a13=new Answer();a16=new Answer();
+        a2=new Answer();a5=new Answer();a8=new Answer();a11=new Answer();a14=new Answer();a17=new Answer();
+        a3=new Answer();a6=new Answer();a9=new Answer();a12=new Answer();a15=new Answer();a18=new Answer();
+
+        q1.setId(1L);
+        q2.setId(2L);
+        q3.setId(3L);
+
+        qu1.setId(1L);qu2.setId(2L);qu3.setId(3L);qu4.setId(4L);qu5.setId(5L);qu6.setId(6L);qu7.setId(7L);qu8.setId(8L);qu9.setId(9L);
+        
+        q1.setQuestions(List.of(qu1,qu2,qu3));
+        q2.setQuestions(List.of(qu4,qu5,qu6));
+        q3.setQuestions(List.of(qu7,qu8,qu9));
+
+        qu1.setAnswers(List.of(a1,a2));
+        qu2.setAnswers(List.of(a3,a4));
+        qu3.setAnswers(List.of(a5,a6));
+        qu4.setAnswers(List.of(a7,a8));
+        qu5.setAnswers(List.of(a9,a10));
+        qu6.setAnswers(List.of(a11,a12));
+        qu7.setAnswers(List.of(a13,a14));
+        qu8.setAnswers(List.of(a15,a16));
+        qu9.setAnswers(List.of(a17,a18));
+
+        when(repo.findBySectionId(1L)).thenReturn(List.of(q1,q2));
+        when(repo.findBySectionId(2L)).thenReturn(List.of(q3));
+
+        boolean valid=service.validSections(List.of(1L,2L));
+
+        assertTrue(valid);
+    }
+
+    @Test
+    @DisplayName("should return false")
+    public void validSectionsTest2(){
+        Quiz q1,q2,q3;
+        Question qu1,qu2,qu3,qu4,qu5,qu6,qu7,qu8,qu9;
+        Answer a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17;
+
+        q1=new Quiz();
+        q2=new Quiz();
+        q3=new Quiz();
+
+        qu1=new Question();
+        qu2=new Question();
+        qu3=new Question();
+        qu4=new Question();
+        qu5=new Question();
+        qu6=new Question();
+        qu7=new Question();
+        qu8=new Question();
+        qu9=new Question();
+        a1=new Answer();a4=new Answer();a7=new Answer();a10=new Answer();a13=new Answer();a16=new Answer();
+        a2=new Answer();a5=new Answer();a8=new Answer();a11=new Answer();a14=new Answer();a17=new Answer();
+        a3=new Answer();a6=new Answer();a9=new Answer();a12=new Answer();a15=new Answer();
+
+        q1.setId(1L);
+        q2.setId(2L);
+        q3.setId(3L);
+
+        qu1.setId(1L);qu2.setId(2L);qu3.setId(3L);qu4.setId(4L);qu5.setId(5L);qu6.setId(6L);qu7.setId(7L);qu8.setId(8L);qu9.setId(9L);
+        
+        q1.setQuestions(List.of(qu1,qu2,qu3));
+        q2.setQuestions(List.of(qu4,qu5,qu6));
+        q3.setQuestions(List.of(qu7,qu8,qu9));
+
+        qu1.setAnswers(List.of(a1,a2));
+        qu2.setAnswers(List.of(a3,a4));
+        qu3.setAnswers(List.of(a5,a6));
+        qu4.setAnswers(List.of(a7,a8));
+        qu5.setAnswers(List.of(a9,a10));
+        qu6.setAnswers(List.of(a11,a12));
+        qu7.setAnswers(List.of(a13,a14));
+        qu8.setAnswers(List.of(a15,a16));
+        qu9.setAnswers(List.of(a17));
+
+        when(repo.findBySectionId(1L)).thenReturn(List.of(q1,q2));
+        when(repo.findBySectionId(2L)).thenReturn(List.of(q3));
+        boolean valid=service.validSections(List.of(1L,2L));
+
+        assertFalse(valid);
+    }
+
+    @Test
+    @DisplayName("should return false")
+    public void validSectionsTest3(){
+        Quiz q1,q2,q3;
+        Question qu1,qu2,qu3,qu4,qu5,qu6,qu7;
+        Answer a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14;
+
+        q1=new Quiz();
+        q2=new Quiz();
+        q3=new Quiz();
+
+        qu1=new Question();
+        qu2=new Question();
+        qu3=new Question();
+        qu4=new Question();
+        qu5=new Question();
+        qu6=new Question();
+        qu7=new Question();
+        a1=new Answer();a4=new Answer();a7=new Answer();a10=new Answer();a13=new Answer();
+        a2=new Answer();a5=new Answer();a8=new Answer();a11=new Answer();a14=new Answer();
+        a3=new Answer();a6=new Answer();a9=new Answer();a12=new Answer();
+
+        q1.setId(1L);
+        q2.setId(2L);
+        q3.setId(3L);
+
+        qu1.setId(1L);qu2.setId(2L);qu3.setId(3L);qu4.setId(4L);qu5.setId(5L);qu6.setId(6L);qu7.setId(7L);
+        
+        q1.setQuestions(List.of(qu1,qu2,qu3));
+        q2.setQuestions(List.of(qu4,qu5,qu6));
+        q3.setQuestions(List.of(qu7));
+
+        qu1.setAnswers(List.of(a1,a2));
+        qu2.setAnswers(List.of(a3,a4));
+        qu3.setAnswers(List.of(a5,a6));
+        qu4.setAnswers(List.of(a7,a8));
+        qu5.setAnswers(List.of(a9,a10));
+        qu6.setAnswers(List.of(a11,a12));
+        qu7.setAnswers(List.of(a13,a14));
+
+        when(repo.findBySectionId(1L)).thenReturn(List.of(q1,q2));
+        when(repo.findBySectionId(2L)).thenReturn(List.of(q3));
+
+        boolean valid=service.validSections(List.of(1L,2L));
+
+        assertFalse(valid);
+    }
 }

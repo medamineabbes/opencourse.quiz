@@ -3,6 +3,9 @@ package com.opencourse.quiz.handlers;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +50,20 @@ public class CustomResponseEntityExceptionHandler {
         return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
     }
 
+    @ExceptionHandler({ ConstraintViolationException.class })
+    public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
+        List<String> errors = new ArrayList<String>();
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            errors.add(violation.getRootBeanClass().getName() + " " + 
+            violation.getPropertyPath() + ": " + violation.getMessage());
+        }
+        ApiError apiError = new ApiError();
+        apiError.setErrors(errors);
+        apiError.setMsg(ex.getLocalizedMessage());
+        apiError.setStatus(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
+    }
+    
     @ExceptionHandler({AnswerNotFoundException.class})
     protected ResponseEntity<Object> handleAnswerNotFoundException(AnswerNotFoundException ex,WebRequest request){
         List<String> errors=new ArrayList<String>();
