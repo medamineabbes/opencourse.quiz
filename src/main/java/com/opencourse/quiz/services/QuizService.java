@@ -33,7 +33,6 @@ public class QuizService {
         this.courseService=courseService;
     }
 
-
     public Long addQuiz(QuizDto qdto,Long userId){
 
         if(!courseService.userCreatedSection(qdto.getSectionId(), userId))
@@ -43,7 +42,6 @@ public class QuizService {
         repo.save(quiz);
         return quiz.getId();
     }
-
 
     public QuizDto getQuiz(Long id,Long userId){
         //make sure quiz exists
@@ -56,7 +54,6 @@ public class QuizService {
 
         return QuizDto.toDto(q);
     }
-
 
     public void updateQuiz(QuizDto q,Long userId) {
         //make sure quiz exists
@@ -71,7 +68,6 @@ public class QuizService {
         quiz.setTitle(q.getTitle());
         repo.flush();
     }
-
 
     public void deleteQuiz(Long id,Long userId){
         //make sure quiz exists
@@ -183,13 +179,15 @@ public class QuizService {
         .collect(Collectors.toList());
     }
 
-
     public boolean finishedSections(List<Long> sectionIds,Long userId){
         
         for(int i=0;i<sectionIds.size();i++){
 
             List<Quiz> quizs=repo.findBySectionId(sectionIds.get(i));
 
+            //making sure quizs exists
+            if(quizs.size()==0)
+            return false;
             for(int j=0;j<quizs.size();j++){
 
                 Optional<QuizTakenByUser> quizTaken=qtRepo
@@ -202,10 +200,13 @@ public class QuizService {
         return true;
     }
 
-
     public boolean validSections(List<Long> sectionIds){
         for(int i=0;i<sectionIds.size();i++){
             List<Quiz> quizs=repo.findBySectionId(sectionIds.get(i));
+
+            //make sure quizs zxists
+            if(quizs.size()==0)
+            return false;
             for(int j=0;j<quizs.size();j++){
                 Quiz quiz=quizs.get(j);
 
