@@ -18,7 +18,7 @@ public class AuthenticationService {
     }
 
     public Boolean validateToken(String token){
-        ResponseEntity<Boolean> response=restTemplate.postForEntity(prop.getAuthUrl(), token, Boolean.class);
+        ResponseEntity<Boolean> response=restTemplate.postForEntity(prop.getAuthUrl() + "?token=" +  token,null, Boolean.class);
         return response.getBody();
     }
 
