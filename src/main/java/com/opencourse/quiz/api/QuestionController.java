@@ -5,6 +5,7 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,35 +29,35 @@ public class QuestionController {
     //only authentic user
     @GetMapping("/{id}")
     public ResponseEntity<QuestionDto> getQuestionById(@PathVariable(required = true) Long id){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(service.getQuestionById(id,userId));
     }
 
     //only teacher
     @PostMapping
     public Long addQuestion(@Valid @RequestBody(required = true) QuestionDto questionDto){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return service.addQuestion(questionDto,userId);
     }
 
     //only teachers
     @PutMapping
     public void updateQuestion(@Valid @RequestBody(required = true) QuestionDto questionDto){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         service.updateQuestion(questionDto,userId);
     }
 
     //only teachers
     @DeleteMapping("/{id}")
     public void deleteQuestionById(@PathVariable(required = true) Long id){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         service.deleteQuestionById(id,userId);
     }
 
     //authentic users
     @GetMapping("/quiz/{id}")
     public ResponseEntity<List<QuestionDto>> getQuestionsByQuizId(@PathVariable(required = true) Long id){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(service.getQuestionsByQuizId(id,userId));
     }
 

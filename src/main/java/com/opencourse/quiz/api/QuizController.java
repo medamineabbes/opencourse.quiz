@@ -5,6 +5,7 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,46 +31,46 @@ public class QuizController {
     //only authentic users
     @GetMapping("/{id}")
     public ResponseEntity<QuizDto> getQuizById(@PathVariable(required = true) Long id) {
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(service.getQuiz(id,userId));
     }
 
     //only teachers
     @PostMapping
     public ResponseEntity<Long> addQuiz( @Valid @RequestBody(required = true) QuizDto quizDto) {    
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(service.addQuiz(quizDto,userId));
     }
     
     //only teacher
     @PutMapping
     public void updateQuiz(@Valid @RequestBody(required = true) QuizDto quizDto){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         service.updateQuiz(quizDto,userId);
     }
 
     //only teacher
     @DeleteMapping("/{id}")
     public void deleteQuizById(@PathVariable(required = true) Long id){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         service.deleteQuiz(id,userId);
     }
 
     //only authentic users
     @PostMapping("/take")
     public ResponseEntity<Boolean> takeQuiz(@Valid @RequestBody(required = true) TakeQuizDto takeQuizDto){
-        Long userId=15L;
+        Long userId=Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(service.takeQuiz(takeQuizDto,userId));
     }
 
-    //only from courseService
+    //all
     @PostMapping("/passed")
     public ResponseEntity<Boolean> areQuizsPassed(@Valid @RequestBody(required = true) verifyQuizDto verifyQuizDto){
         return ResponseEntity
         .ok(service.finishedSections(verifyQuizDto.getSectionIds(), verifyQuizDto.getUserId()));
     }
 
-    //only from CourseService
+    //all
     @PostMapping("/valid")
     public ResponseEntity<Boolean> validSection(@RequestBody(required = true) List<Long> sectionIds){
         return ResponseEntity
